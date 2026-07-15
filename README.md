@@ -8,10 +8,29 @@ You calibrate the stereo width per frequency until a moving test tone tracks a
 reference tone; the tool then computes a FIR filter and saves it as a `.dbl`
 file. You import that file into amberDSP (or another host) which applies it.
 
-## Status
+## Run it
 
-Cross-platform web app: run the binary, open `http://localhost:PORT` in your
-browser, pick your UPnP renderer, calibrate, export the filter.
+It's a small cross-platform web app. Build and run from source:
+
+```
+go build -o amberfocus-setup ./cmd/amberfocus-setup
+./amberfocus-setup            # opens http://localhost:8099 in your browser
+```
+
+Flags: `--port` (default 8099), `--out` (output directory for the `.dbl` files,
+default current dir), `--no-browser`.
+
+In the UI, pick an **output**:
+
+- **Network renderer (UPnP)** — streams the test tones to a discovered renderer.
+- **This computer (USB DAC / local)** — plays on the machine's default audio
+  device; set your USB DAC as the system default output.
+
+Then calibrate the stereo width per frequency until each test tone tracks the
+moving reference, and export. The resulting `FHR-<rate>.dbl` filters can be
+uploaded into amberDSP (amberFOCUS filter section).
+
+Prebuilt binaries: see **Releases** (once published).
 
 ## License
 
