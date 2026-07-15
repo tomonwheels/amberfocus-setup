@@ -1,7 +1,7 @@
 // Package data embeds frankl's calibration tone data.
 //
 // locotestdata.raw and freq originate from frankl's stereo utilities
-// (Frank Brenner, GPL-3.0-or-later). See ../../README.md and ../../LICENSE.
+// (by frankl, GPL-3.0-or-later). See ../../README.md and ../../LICENSE.
 package data
 
 import _ "embed"

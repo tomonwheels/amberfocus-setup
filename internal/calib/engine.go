@@ -1,6 +1,6 @@
 // Package calib is the LoCo calibration tone engine.
 //
-// Port of frankl's locotest.c (Frank Brenner, GPL-3.0-or-later), decoupled from
+// Port of frankl's locotest.c (by frankl, GPL-3.0-or-later), decoupled from
 // amberSUITE so it runs standalone. Generates the moving reference tone plus the
 // per-frequency test tones with a live-adjustable Mid/Side width multiplier.
 //

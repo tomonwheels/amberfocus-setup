@@ -36,8 +36,8 @@ Prebuilt binaries: see **Releases** (once published).
 
 **GPL-3.0-or-later.** This program is free software.
 
-This tool is a derivative work of **frankl's stereo utilities** by
-**Frank Brenner** ("frankl") — specifically a Go port of `locotest.c` and it
+This tool is a derivative work of **frankl's stereo utilities** by **frankl**
+(active on aktives-hoeren.de) — specifically a Go port of `locotest.c` and it
 ships frankl's calibration tone data. Original:
 <http://frankl.luebecknet.de/stereoutils/> ·
 <https://github.com/frankl-audio/frankl_stereo> (GPL-3.0-or-later).
