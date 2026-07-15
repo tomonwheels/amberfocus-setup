@@ -2,8 +2,10 @@
 //
 // Port of frankl's locotest.c (Frank Brenner, GPL-3.0-or-later), decoupled from
 // amberSUITE so it runs standalone. Generates the moving reference tone plus the
-// per-frequency test tones with a live-adjustable Mid/Side width multiplier, and
-// streams them as a WAV to the UPnP renderer.
+// per-frequency test tones with a live-adjustable Mid/Side width multiplier.
+//
+// The same sample generator (genStereo) feeds either the WAV HTTP stream (for a
+// UPnP renderer) or the local audio device (Read implements io.Reader for oto).
 package calib
 
 import (
@@ -29,6 +31,12 @@ type Engine struct {
 	active  [100]bool
 	mults   [100]float64
 	vol     float64
+
+	// panning-envelope state (shared by the single active output)
+	delta float64
+	pos   int
+	envM  float64
+	envF  float64
 }
 
 // New returns an Engine initialised like frankl's locotest defaults.
@@ -37,6 +45,7 @@ func New() *Engine {
 	for i := range e.mults {
 		e.mults[i] = 1.0
 	}
+	e.delta = math.Pow(1.1220184543019633, 1.0/float64(e.tonelen))
 	return e
 }
 
@@ -52,7 +61,7 @@ func (e *Engine) load() {
 	}
 }
 
-// Start loads the tone bank (once) and begins the stream loop.
+// Start loads the tone bank (once), resets the envelope and begins output.
 func (e *Engine) Start() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -60,11 +69,14 @@ func (e *Engine) Start() {
 		return
 	}
 	e.load()
+	e.pos = 0
+	e.envM = e.maxm
+	e.envF = e.delta
 	e.running = true
 	e.stopCh = make(chan struct{})
 }
 
-// Stop ends the stream loop.
+// Stop ends output.
 func (e *Engine) Stop() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -122,7 +134,68 @@ func (e *Engine) Status() map[string]any {
 	}
 }
 
-// Stream serves the live test-tone WAV (44100 Hz, stereo, S32_LE).
+// genStereo fills out (interleaved L,R float32) with the next block, advancing
+// the panning envelope. Produces silence when the engine is not running.
+func (e *Engine) genStereo(out []float32) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	nframes := len(out) / 2
+	if !e.running {
+		for i := range out {
+			out[i] = 0
+		}
+		return
+	}
+	vol := float32(e.vol)
+	for i := 0; i < nframes; i++ {
+		if e.pos >= e.tonelen {
+			e.pos = 0
+		}
+		e.envM *= e.envF
+		if e.maxm*e.envM < 1 {
+			e.envM = 1.0 / e.maxm
+			e.envF = 1 / e.delta
+		}
+		if e.envM > e.maxm {
+			e.envM = e.maxm
+			e.envF = e.delta
+		}
+		a := e.envM / (1 + e.envM)
+		b := 1 - a
+		var left, right float32
+		for j := 0; j < e.nrtones; j++ {
+			if !e.active[j] {
+				continue
+			}
+			c := (1.0 + e.mults[j]) / 2.0
+			d := (1.0 - e.mults[j]) / 2.0
+			sample := e.tones[j*e.tonelen+e.pos]
+			left += float32(c*a+d*b) * sample
+			right += float32(d*a+c*b) * sample
+		}
+		out[2*i] = left * vol
+		out[2*i+1] = right * vol
+		e.pos++
+	}
+}
+
+// Read implements io.Reader, emitting interleaved float32 LE stereo — for the
+// local audio device (oto). Always returns data (silence when not running).
+func (e *Engine) Read(p []byte) (int, error) {
+	nframes := len(p) / 8 // stereo float32 = 8 bytes/frame
+	if nframes == 0 {
+		return 0, nil
+	}
+	buf := make([]float32, nframes*2)
+	e.genStereo(buf)
+	for i, s := range buf {
+		binary.LittleEndian.PutUint32(p[i*4:], math.Float32bits(s))
+	}
+	return nframes * 8, nil
+}
+
+// Stream serves the live test-tone WAV (44100 Hz, stereo, S32_LE) for a UPnP
+// renderer.
 func (e *Engine) Stream(w http.ResponseWriter, r *http.Request) {
 	e.mu.Lock()
 	if !e.running {
@@ -145,65 +218,20 @@ func (e *Engine) Stream(w http.ResponseWriter, r *http.Request) {
 	writeWAVHeader(w, e.rate)
 	flusher.Flush()
 
-	delta := math.Pow(1.1220184543019633, 1.0/float64(e.tonelen))
-	blen := 1024
+	const blen = 1024
+	fbuf := make([]float32, blen*2)
 	outbuf := make([]byte, blen*2*4)
-	var pos int
-	m := e.maxm
-	f := delta
-
 	for {
 		select {
 		case <-stopCh:
 			return
 		default:
 		}
-
-		e.mu.Lock()
-		vol := e.vol
-		var activeList [100]bool
-		var multList [100]float64
-		copy(activeList[:], e.active[:])
-		copy(multList[:], e.mults[:])
-		e.mu.Unlock()
-
-		for i := 0; i < blen; i++ {
-			if pos >= e.tonelen {
-				pos = 0
-			}
-			m *= f
-			if e.maxm*m < 1 {
-				m = 1.0 / e.maxm
-				f = 1 / delta
-			}
-			if m > e.maxm {
-				m = e.maxm
-				f = delta
-			}
-			a := m / (1 + m)
-			b := 1 - a
-
-			var left, right float32
-			for j := 0; j < e.nrtones; j++ {
-				if !activeList[j] {
-					continue
-				}
-				c := (1.0 + multList[j]) / 2.0
-				d := (1.0 - multList[j]) / 2.0
-				sample := e.tones[j*e.tonelen+pos]
-				left += float32(c*a+d*b) * sample
-				right += float32(d*a+c*b) * sample
-			}
-			left *= float32(vol)
-			right *= float32(vol)
-
-			sl := int32(float64(left) * 2147483647.0)
-			sr := int32(float64(right) * 2147483647.0)
-			binary.LittleEndian.PutUint32(outbuf[i*8:], uint32(sl))
-			binary.LittleEndian.PutUint32(outbuf[i*8+4:], uint32(sr))
-			pos++
+		e.genStereo(fbuf)
+		for i, s := range fbuf {
+			v := int32(float64(s) * 2147483647.0)
+			binary.LittleEndian.PutUint32(outbuf[i*4:], uint32(v))
 		}
-
 		if _, err := w.Write(outbuf); err != nil {
 			return
 		}

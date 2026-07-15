@@ -1,7 +1,8 @@
 // Command amberfocus-setup is a standalone LoCo/localisation-correction filter
 // calibration tool (a GPL derivative of frankl's locotest.c). It serves a local
-// web UI, streams calibration test tones to a UPnP renderer, and exports the
-// resulting FIR filters as .dbl files for import into amberDSP.
+// web UI, plays calibration test tones either through a UPnP renderer or the
+// local audio device (USB DAC / built-in), and exports the resulting FIR filters
+// as .dbl files for import into amberDSP.
 package main
 
 import (
@@ -20,16 +21,19 @@ import (
 	"time"
 
 	"github.com/tomonwheels/amberfocus-setup/internal/calib"
+	"github.com/tomonwheels/amberfocus-setup/internal/localout"
 	"github.com/tomonwheels/amberfocus-setup/internal/upnp"
 	"github.com/tomonwheels/amberfocus-setup/web"
 )
 
 var (
-	engine = calib.New()
+	engine  = calib.New()
+	lplayer = &localout.Player{}
 
-	mu        sync.Mutex
-	renderers []upnp.Renderer
-	selected  *upnp.Renderer
+	mu         sync.Mutex
+	renderers  []upnp.Renderer
+	selected   *upnp.Renderer
+	outputMode = "upnp" // "upnp" | "local"
 
 	outDir string
 	port   int
@@ -47,6 +51,7 @@ func main() {
 	mux.HandleFunc("/", handleIndex)
 	mux.HandleFunc("/api/renderers", handleRenderers)
 	mux.HandleFunc("/api/select", handleSelect)
+	mux.HandleFunc("/api/output", handleOutput)
 	mux.HandleFunc("/api/locotest/start", handleStart)
 	mux.HandleFunc("/api/locotest/stop", handleStop)
 	mux.HandleFunc("/api/locotest/tone", handleTone)
@@ -103,8 +108,9 @@ func handleRenderers(w http.ResponseWriter, r *http.Request) {
 	if selected != nil {
 		selUDN = selected.UDN
 	}
+	mode := outputMode
 	mu.Unlock()
-	writeJSON(w, map[string]any{"renderers": rs, "selected": selUDN})
+	writeJSON(w, map[string]any{"renderers": rs, "selected": selUDN, "output": mode})
 }
 
 func handleSelect(w http.ResponseWriter, r *http.Request) {
@@ -124,10 +130,39 @@ func handleSelect(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"ok": true})
 }
 
+func handleOutput(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Mode string `json:"mode"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	if body.Mode != "upnp" && body.Mode != "local" {
+		http.Error(w, "mode must be upnp or local", http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	outputMode = body.Mode
+	mu.Unlock()
+	writeJSON(w, map[string]any{"ok": true, "output": body.Mode})
+}
+
 func handleStart(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
+	mode := outputMode
 	sel := selected
 	mu.Unlock()
+
+	if mode == "local" {
+		engine.Start()
+		if err := lplayer.Start(engine, engine.Rate()); err != nil {
+			engine.Stop()
+			http.Error(w, "Lokale Audioausgabe: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, map[string]any{"ok": true})
+		return
+	}
+
+	// UPnP
 	if sel == nil {
 		http.Error(w, "kein Renderer ausgewählt", http.StatusBadRequest)
 		return
@@ -149,10 +184,12 @@ func handleStart(w http.ResponseWriter, r *http.Request) {
 
 func handleStop(w http.ResponseWriter, r *http.Request) {
 	engine.Stop()
+	lplayer.Stop()
 	mu.Lock()
 	sel := selected
+	mode := outputMode
 	mu.Unlock()
-	if sel != nil {
+	if mode == "upnp" && sel != nil {
 		go func() { _ = upnp.Stop(sel) }()
 	}
 	writeJSON(w, map[string]any{"ok": true})

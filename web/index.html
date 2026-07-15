@@ -22,6 +22,8 @@ h2{font-size:15px;font-weight:600;margin:0 0 10px}
 .sub{color:var(--tx3);font-size:12px;margin-top:2px}
 .card{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:18px}
 .rsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.out-ctl{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.out-ctl .sub{max-width:260px;text-align:right}
 select{font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--brd);border-radius:var(--r);background:var(--surface);color:var(--tx);min-width:180px}
 .btn-sm,.btn-sm-amber,.btn-sm-danger{font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 12px;border-radius:var(--r);border:1px solid var(--brd);background:var(--surface);color:var(--tx2);cursor:pointer;transition:all .12s}
 .btn-sm:hover{border-color:var(--am);color:var(--am)}
@@ -79,10 +81,22 @@ select{font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid 
       <h1><span class="am">amber</span>FOCUS Setup</h1>
       <div class="sub">Lokalisations-Korrektur · Filter-Kalibrierung</div>
     </div>
-    <div class="rsel">
-      <span class="lc-vol-lbl">Renderer</span>
-      <select id="rendererSel" onchange="selectRenderer()"><option>… suche …</option></select>
-      <button class="btn-sm" onclick="loadRenderers(true)" title="Renderer neu suchen">↻</button>
+    <div class="out-ctl">
+      <div class="rsel">
+        <span class="lc-vol-lbl">Ausgabe</span>
+        <select id="outMode" onchange="setOutput()">
+          <option value="upnp">Netzwerk-Renderer (UPnP)</option>
+          <option value="local">Dieser Computer (USB-DAC / lokal)</option>
+        </select>
+      </div>
+      <div class="rsel" id="rendererRow">
+        <span class="lc-vol-lbl">Renderer</span>
+        <select id="rendererSel" onchange="selectRenderer()"><option>… suche …</option></select>
+        <button class="btn-sm" onclick="loadRenderers(true)" title="Renderer neu suchen">↻</button>
+      </div>
+      <div class="rsel" id="localNote" style="display:none">
+        <span class="sub">nutzt das Standard-Ausgabegerät — stelle deinen USB-DAC im System als Standard-Ausgabe ein</span>
+      </div>
     </div>
   </header>
 
@@ -172,6 +186,12 @@ async function loadRenderers(rescan){
 async function selectRenderer(){
   const udn=document.getElementById('rendererSel').value;
   try{ await fetch('/api/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({udn})}); }catch(e){}
+}
+async function setOutput(){
+  const mode=document.getElementById('outMode').value;
+  document.getElementById('rendererRow').style.display = mode==='upnp' ? '' : 'none';
+  document.getElementById('localNote').style.display   = mode==='local' ? '' : 'none';
+  try{ await fetch('/api/output',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})}); }catch(e){ logLine('output: '+e.message,true); }
 }
 
 /* ── Kalibrier-Engine (1:1 aus amberDSP ui/index.html, Port von locotest.html) ── */
