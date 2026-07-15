@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>amberFOCUS Setup</title>
+<style>
+:root{
+  --bg:#F0EFEC; --bg1:#E8E7E3; --bg3:#DAD8D2; --surface:#FBFAF8;
+  --tx:#1E1C1A; --tx2:#4A4742; --tx3:#8A857D;
+  --am:#C8841A; --amb:#F6ECDD; --ambb:#E4C79A; --brd:#DAD8D2; --r:8px;
+  --mono:'IBM Plex Mono','SF Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans',-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14px;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:24px 18px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+h1 .am{color:var(--am)}
+h2{font-size:15px;font-weight:600;margin:0 0 10px}
+.sub{color:var(--tx3);font-size:12px;margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:18px}
+.rsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+select{font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--brd);border-radius:var(--r);background:var(--surface);color:var(--tx);min-width:180px}
+.btn-sm,.btn-sm-amber,.btn-sm-danger{font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 12px;border-radius:var(--r);border:1px solid var(--brd);background:var(--surface);color:var(--tx2);cursor:pointer;transition:all .12s}
+.btn-sm:hover{border-color:var(--am);color:var(--am)}
+.btn-sm-amber{background:var(--am);border-color:var(--am);color:#fff}
+.btn-sm-amber:hover{filter:brightness(1.06)}
+.btn-sm-amber:disabled{background:var(--bg3);border-color:var(--bg3);color:var(--tx3);cursor:default}
+.btn-sm-danger{border-color:#d9a0a0;color:#b3413a}
+.btn-sm-danger:hover{background:#b3413a;border-color:#b3413a;color:#fff}
+.info-btn{width:18px;height:18px;border-radius:50%;border:1px solid var(--brd);background:transparent;color:var(--tx3);font-size:11px;line-height:1;cursor:pointer;font-style:italic}
+#log{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--tx3);max-height:120px;overflow:auto}
+/* ── LoCo Kalibrier-Engine (1:1 aus amberDSP) ── */
+.lc-eng-head { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+.lc-eng-ctl { display:flex; gap:8px; }
+.lc-guide { margin:6px 0 14px; }
+.lc-guide summary { cursor:pointer; font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--am); }
+.lc-guide > div { margin-top:8px; padding:12px 14px; background:var(--bg1); border-radius:var(--r); font-size:12px; line-height:1.6; color:var(--tx2); }
+.lc-guide ol { margin:6px 0; padding-left:18px; }
+.lc-guide li { margin:3px 0; }
+.lc-eng-row { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:4px 0 12px; }
+.lc-ref { display:inline-flex; align-items:center; height:26px; padding:0 12px; border:1px solid var(--ambb); background:var(--amb); color:var(--am); border-radius:13px; font-family:var(--mono); font-size:10px; letter-spacing:.04em; }
+.lc-vol { display:flex; align-items:center; gap:10px; flex:1; min-width:200px; max-width:340px; }
+.lc-vol-lbl { font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--tx3); }
+.lc-vol-val { font-family:var(--mono); font-size:11px; color:var(--tx2); min-width:34px; text-align:right; }
+.lc-range { -webkit-appearance:none; appearance:none; flex:1; height:3px; border-radius:2px; background:var(--bg3); outline:none; }
+.lc-range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%; background:var(--am); cursor:pointer; }
+.lc-range::-moz-range-thumb { width:14px; height:14px; border:none; border-radius:50%; background:var(--am); cursor:pointer; }
+.lc-prog { display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+.lc-prog-bar { flex:1; height:5px; border-radius:3px; background:var(--bg3); overflow:hidden; }
+.lc-prog-fill { height:100%; width:0; background:var(--am); border-radius:3px; transition:width .2s; }
+.lc-prog-txt { font-family:var(--mono); font-size:10px; color:var(--tx3); white-space:nowrap; }
+.lc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(86px,1fr)); gap:5px; margin:0 0 14px; max-height:360px; overflow-y:auto; }
+.lc-cell { display:flex; align-items:center; justify-content:space-between; gap:4px; padding:6px 9px; border:1px solid var(--brd); border-radius:var(--r); font-family:var(--mono); font-size:10px; color:var(--tx2); background:var(--surface); cursor:pointer; transition:all .12s; }
+.lc-cell:hover { border-color:var(--am); }
+.lc-cell.sel { border-color:var(--am); box-shadow:0 0 0 1px var(--am); color:var(--am); }
+.lc-cell.done { border-color:var(--am); background:var(--am); color:#fff; }
+.lc-cell .lc-note { font-weight:600; }
+.lc-cell .lc-hz { color:var(--tx3); font-size:9px; }
+.lc-cell.done .lc-hz { color:rgba(255,255,255,.75); }
+.lc-cell.sel .lc-hz { color:var(--am); }
+.lc-adjust { display:none; background:var(--bg1); border-radius:var(--r); padding:16px; margin:0 0 14px; }
+.lc-adjust.on { display:block; }
+.lc-adj-title { font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--am); text-align:center; }
+.lc-mult { font-family:var(--mono); font-size:26px; font-weight:500; text-align:center; margin:8px 0; color:var(--tx); }
+.lc-adj-btns { display:flex; justify-content:center; flex-wrap:wrap; gap:6px; }
+.lc-adj-btns .btn-sm, .lc-adj-btns .btn-sm-amber { min-width:48px; justify-content:center; }
+.lc-adj-hint { text-align:center; margin-top:8px; font-size:10px; color:var(--tx3); }
+.lc-export { margin-top:6px; padding-top:14px; border-top:1px solid var(--brd); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.lc-export-status { font-family:var(--mono); font-size:11px; color:var(--tx2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="am">amber</span>FOCUS Setup</h1>
+      <div class="sub">Lokalisations-Korrektur · Filter-Kalibrierung</div>
+    </div>
+    <div class="rsel">
+      <span class="lc-vol-lbl">Renderer</span>
+      <select id="rendererSel" onchange="selectRenderer()"><option>… suche …</option></select>
+      <button class="btn-sm" onclick="loadRenderers(true)" title="Renderer neu suchen">↻</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="lc-eng-head">
+      <h2 style="margin:0">Filter-Engine · Kalibrierung</h2>
+      <div class="lc-eng-ctl">
+        <button class="btn-sm-amber" id="lcStart" onclick="lcTestStart()">▶ Test starten</button>
+        <button class="btn-sm-danger" id="lcStop" onclick="lcTestStop()" style="display:none">■ Stop</button>
+      </div>
+    </div>
+    <details class="lc-guide"><summary>Anleitung</summary>
+      <div>
+        <p>amberFOCUS korrigiert die frequenzabhängige Stereo-Lokalisierung (Mid/Side). Du kalibrierst pro Frequenz die Stereobreite, bis der Testton <em>synchron</em> mit dem wandernden Referenzton (Gb5, 740 Hz) läuft.</p>
+        <ol>
+          <li>Renderer oben auswählen — auf diesem Gerät hörst du die Testtöne.</li>
+          <li><b>Test starten</b> — der Referenzton wandert von links nach rechts und zurück.</li>
+          <li>Eine Frequenz im Raster wählen — sie wird dazugemischt.</li>
+          <li>Mit ±-Schritten den Multiplikator anpassen, bis der Ton synchron mit der Referenz wandert.</li>
+          <li><b>✓ Passt</b> bestätigen, nächste Frequenz wählen (min. 10, ideal 30–50).</li>
+          <li><b>Filter berechnen &amp; speichern</b> — erzeugt FIR für alle Sampleraten (.dbl).</li>
+        </ol>
+        <p style="color:var(--tx3)">Kleiner Multiplikator = engeres Stereobild bei der Frequenz, größer = weiter. Tiefe (&lt;50 Hz) und sehr hohe (&gt;6 kHz) Töne sind schwerer zu beurteilen. Die fertigen <code>.dbl</code>-Filter lädst du danach in amberDSP hoch.</p>
+      </div>
+    </details>
+    <div id="lcEngBody" style="display:none">
+      <div class="lc-eng-row">
+        <span class="lc-ref">Referenz · Gb5 · 740 Hz</span>
+        <div class="lc-vol">
+          <span class="lc-vol-lbl">Pegel</span>
+          <input type="range" id="lcVol" class="lc-range" min="0.05" max="0.8" step="0.05" value="0.4" oninput="lcSetVol(this.value)">
+          <span class="lc-vol-val" id="lcVolVal">0.40</span>
+        </div>
+      </div>
+      <div class="lc-prog"><div class="lc-prog-bar"><div class="lc-prog-fill" id="lcProgFill"></div></div><span class="lc-prog-txt" id="lcProgTxt">0 von 97 kalibriert</span></div>
+      <div class="lc-grid" id="lcGrid"></div>
+      <div class="lc-adjust" id="lcAdjust">
+        <div class="lc-adj-title" id="lcAdjTitle">—</div>
+        <div class="lc-mult" id="lcMult">1.000</div>
+        <div class="lc-adj-btns">
+          <button class="btn-sm" onclick="lcAdj(-0.1)">−0.1</button>
+          <button class="btn-sm" onclick="lcAdj(-0.01)">−0.01</button>
+          <button class="btn-sm" onclick="lcAdj(-0.001)">−0.001</button>
+          <button class="btn-sm-amber" onclick="lcConfirm()">✓ Passt</button>
+          <button class="btn-sm" onclick="lcAdj(0.001)">+0.001</button>
+          <button class="btn-sm" onclick="lcAdj(0.01)">+0.01</button>
+          <button class="btn-sm" onclick="lcAdj(0.1)">+0.1</button>
+        </div>
+        <div class="lc-adj-hint">Kleiner = engeres Stereobild · Größer = weiter</div>
+      </div>
+      <div class="lc-export" id="lcExport">
+        <button class="btn-sm-amber" id="lcExportBtn" onclick="lcExport()" disabled>Filter berechnen &amp; speichern</button>
+        <span class="lc-export-status" id="lcExportStatus">Noch 10 Frequenzen bis zum Export</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="log"></div>
+</div>
+
+<script>
+/* ── Standalone-Shims (ersetzen die amberDSP-Suite-Glue) ── */
+let LANG='de';
+const T={
+  'ui.dyn_of':{de:'von',en:'of'},
+  'ui.dyn_calibrated':{de:'kalibriert',en:'calibrated'},
+  'log.loco_calib_start':{de:'Kalibrierung gestartet',en:'Calibration started'},
+  'log.loco_calib_stop':{de:'Kalibrierung gestoppt',en:'Calibration stopped'},
+  'log.loco_filter_saved':{de:'Filter gespeichert',en:'Filter saved'}
+};
+function getLang(){ return LANG; }
+function t(k){ const e=T[k]; return e?e[LANG]:k; }
+function logLine(m,err){ const el=document.getElementById('log'); if(!el){ console.log(m); return; } const d=document.createElement('div'); if(err) d.style.color='#b3413a'; d.textContent=m; el.prepend(d); }
+function escAttr(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ── Renderer-Auswahl (Standalone) ── */
+async function loadRenderers(rescan){
+  const sel=document.getElementById('rendererSel');
+  sel.innerHTML='<option>… suche …</option>';
+  try{
+    const d=await (await fetch('/api/renderers'+(rescan?'?rescan=1':''))).json();
+    const rs=d.renderers||[];
+    if(!rs.length){ sel.innerHTML='<option value="">kein Renderer gefunden</option>'; return; }
+    sel.innerHTML=rs.map(r=>`<option value="${escAttr(r.udn)}"${r.udn===d.selected?' selected':''}>${escAttr(r.name||r.ip)}</option>`).join('');
+  }catch(e){ sel.innerHTML='<option value="">Fehler</option>'; logLine('renderers: '+e.message,true); }
+}
+async function selectRenderer(){
+  const udn=document.getElementById('rendererSel').value;
+  try{ await fetch('/api/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({udn})}); }catch(e){}
+}
+
+/* ── Kalibrier-Engine (1:1 aus amberDSP ui/index.html, Port von locotest.html) ── */
+const LC_FREQS=[
+  {n:'A0',hz:27.5},{n:'Bb0',hz:29.14},{n:'B0',hz:30.87},{n:'C1',hz:32.70},{n:'Db1',hz:34.65},{n:'D1',hz:36.71},{n:'Eb1',hz:38.89},{n:'E1',hz:41.20},{n:'F1',hz:43.65},{n:'Gb1',hz:46.25},
+  {n:'G1',hz:49.00},{n:'Ab1',hz:51.91},{n:'A1',hz:55.00},{n:'Bb1',hz:58.27},{n:'B1',hz:61.74},{n:'C2',hz:65.41},{n:'Db2',hz:69.30},{n:'D2',hz:73.42},{n:'Eb2',hz:77.78},{n:'E2',hz:82.41},
+  {n:'F2',hz:87.31},{n:'Gb2',hz:92.50},{n:'G2',hz:98.00},{n:'Ab2',hz:103.83},{n:'A2',hz:110.00},{n:'Bb2',hz:116.54},{n:'B2',hz:123.47},{n:'C3',hz:130.81},{n:'Db3',hz:138.59},{n:'D3',hz:146.83},
+  {n:'Eb3',hz:155.56},{n:'E3',hz:164.81},{n:'F3',hz:174.61},{n:'Gb3',hz:185.00},{n:'G3',hz:196.00},{n:'Ab3',hz:207.65},{n:'A3',hz:220.00},{n:'Bb3',hz:233.08},{n:'B3',hz:246.94},{n:'C4',hz:261.63},
+  {n:'Db4',hz:277.18},{n:'D4',hz:293.67},{n:'Eb4',hz:311.13},{n:'E4',hz:329.63},{n:'F4',hz:349.23},{n:'Gb4',hz:369.99},{n:'G4',hz:392.00},{n:'Ab4',hz:415.31},{n:'A4',hz:440.00},{n:'Bb4',hz:466.16},
+  {n:'B4',hz:493.88},{n:'C5',hz:523.25},{n:'Db5',hz:554.37},{n:'D5',hz:587.33},{n:'Eb5',hz:622.25},{n:'E5',hz:659.26},{n:'F5',hz:698.46},{n:'Gb5',hz:739.99},{n:'G5',hz:783.99},{n:'Ab5',hz:830.61},
+  {n:'A5',hz:880.00},{n:'Bb5',hz:932.33},{n:'B5',hz:987.77},{n:'C6',hz:1046.50},{n:'Db6',hz:1108.73},{n:'D6',hz:1174.66},{n:'Eb6',hz:1244.51},{n:'E6',hz:1318.51},{n:'F6',hz:1396.91},{n:'Gb6',hz:1479.98},
+  {n:'G6',hz:1567.98},{n:'Ab6',hz:1661.22},{n:'A6',hz:1760.00},{n:'Bb6',hz:1864.66},{n:'B6',hz:1975.53},{n:'C7',hz:2093.00},{n:'Db7',hz:2217.46},{n:'D7',hz:2349.32},{n:'Eb7',hz:2489.02},{n:'E7',hz:2637.02},
+  {n:'F7',hz:2793.83},{n:'Gb7',hz:2959.96},{n:'G7',hz:3135.96},{n:'Ab7',hz:3322.44},{n:'A7',hz:3520.00},{n:'Bb7',hz:3729.31},{n:'B7',hz:3951.07},{n:'C8',hz:4186.01},{n:'Db8',hz:4434.92},{n:'D8',hz:4698.64},
+  {n:'Eb8',hz:4978.04},{n:'E8',hz:5274.04},{n:'F8',hz:5587.66},{n:'Gb8',hz:5919.92},{n:'G8',hz:6271.93},{n:'Ab8',hz:6644.88},{n:'A8',hz:7040.00},{n:'Bb8',hz:7458.62},{n:'B8',hz:7902.14},{n:'C9',hz:8372.02}
+];
+const LC_REF_FREQIDX=57; // Gb5 (739.99 Hz) = Referenzton, kein Kalibrier-Ziel
+let lcRunning=false, lcActiveTone=-1, lcMults=new Array(100).fill(1.0), lcConfirmed=new Set(), lcTotal=0, LC_GRID_BUILT=false;
+function lcBuildGrid(){
+  const grid=document.getElementById('lcGrid'); if(!grid) return;
+  let cells='', total=0;
+  for(let i=0;i<LC_FREQS.length;i++){
+    const toneIdx=i+3; // 0=Rosa-Rauschen,1=Referenz,2=Stille,3..=Testtöne
+    if(toneIdx>=100) continue;
+    if(i===LC_REF_FREQIDX) continue; // Referenzton überspringen
+    total++;
+    const f=LC_FREQS[i];
+    cells+=`<div class="lc-cell" id="lcc${toneIdx}" onclick="lcSelect(${toneIdx},${i})"><span class="lc-note">${f.n}</span><span class="lc-hz">${f.hz.toFixed(0)} Hz</span></div>`;
+  }
+  grid.innerHTML=cells; lcTotal=total; LC_GRID_BUILT=true; lcProg();
+}
+function lcProg(){
+  const fill=document.getElementById('lcProgFill'), txt=document.getElementById('lcProgTxt');
+  const n=lcConfirmed.size;
+  if(fill) fill.style.width=(lcTotal?Math.round(n/lcTotal*100):0)+'%';
+  if(txt) txt.textContent=n+' '+t('ui.dyn_of')+' '+lcTotal+' '+t('ui.dyn_calibrated');
+  lcExportState();
+}
+function lcExportState(){
+  const btn=document.getElementById('lcExportBtn'), st=document.getElementById('lcExportStatus');
+  if(!btn) return;
+  const n=lcConfirmed.size, ready=n>=10;
+  btn.disabled=!ready;
+  if(st && st.dataset.busy!=='1'){
+    st.textContent = getLang()==='en'
+      ? (ready?('ready · '+n+' frequencies calibrated'):((10-n)+' more frequenc'+((10-n)===1?'y':'ies')+' until export'))
+      : (ready?('bereit · '+n+' Frequenzen kalibriert'):('Noch '+(10-n)+' Frequenz'+((10-n)===1?'':'en')+' bis zum Export'));
+  }
+}
+async function lcTestStart(){
+  try{ const r=await fetch('/api/locotest/start',{method:'POST'}); if(!r.ok) throw new Error(await r.text()); }
+  catch(e){ logLine('locotest: '+e.message,true); alert('Engine-Start fehlgeschlagen: '+e.message); return; }
+  lcRunning=true;
+  if(!LC_GRID_BUILT) lcBuildGrid();
+  document.getElementById('lcStart').style.display='none';
+  document.getElementById('lcStop').style.display='';
+  document.getElementById('lcEngBody').style.display='';
+  await fetch('/api/locotest/tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:1,active:true})});
+  logLine(t('log.loco_calib_start'));
+}
+async function lcTestStop(){
+  try{ await fetch('/api/locotest/stop',{method:'POST'}); }catch(e){}
+  lcRunning=false; lcActiveTone=-1;
+  document.getElementById('lcStart').style.display='';
+  document.getElementById('lcStop').style.display='none';
+  document.getElementById('lcAdjust').classList.remove('on');
+  document.querySelectorAll('.lc-cell.sel').forEach(c=>c.classList.remove('sel'));
+  logLine(t('log.loco_calib_stop'));
+}
+function lcSetVol(v){
+  document.getElementById('lcVolVal').textContent=parseFloat(v).toFixed(2);
+  fetch('/api/locotest/vol',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vol:parseFloat(v)})});
+}
+function lcSelect(toneIdx,freqIdx){
+  if(!lcRunning) return;
+  if(lcActiveTone>=0){ fetch('/api/locotest/tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:lcActiveTone,active:false})}); }
+  lcActiveTone=toneIdx;
+  fetch('/api/locotest/tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:toneIdx,active:true})});
+  const f=LC_FREQS[freqIdx];
+  document.getElementById('lcAdjTitle').textContent=f.n+' · '+f.hz.toFixed(1)+' Hz';
+  document.getElementById('lcMult').textContent=lcMults[toneIdx].toFixed(3);
+  document.getElementById('lcAdjust').classList.add('on');
+  document.querySelectorAll('.lc-cell.sel').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('lcc'+toneIdx)?.classList.add('sel');
+}
+function lcAdj(delta){
+  if(lcActiveTone<0) return;
+  lcMults[lcActiveTone]=Math.max(-0.8,Math.min(0.8,lcMults[lcActiveTone]+delta));
+  document.getElementById('lcMult').textContent=lcMults[lcActiveTone].toFixed(3);
+  fetch('/api/locotest/mult',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:lcActiveTone,mult:lcMults[lcActiveTone]})});
+}
+function lcConfirm(){
+  if(lcActiveTone<0) return;
+  lcConfirmed.add(lcActiveTone);
+  fetch('/api/locotest/tone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({index:lcActiveTone,active:false})});
+  const cell=document.getElementById('lcc'+lcActiveTone); if(cell){ cell.classList.remove('sel'); cell.classList.add('done'); }
+  document.getElementById('lcAdjust').classList.remove('on');
+  lcActiveTone=-1; lcProg();
+}
+/* FIR-Berechnung — 1:1 aus locotest.html */
+function lcComputeFilter(sampleRate,filterLen){
+  const points=[];
+  for(const idx of lcConfirmed){ const fi=idx-3; if(fi>=0&&fi<LC_FREQS.length) points.push({freq:LC_FREQS[fi].hz,mult:lcMults[idx]}); }
+  points.sort((a,b)=>a.freq-b.freq);
+  if(points.length===0) return null;
+  if(points[0].freq>20) points.unshift({freq:0,mult:points[0].mult});
+  const nyquist=sampleRate/2;
+  if(points[points.length-1].freq<nyquist) points.push({freq:nyquist,mult:points[points.length-1].mult});
+  const nBins=filterLen/2+1;
+  const magnitude=new Float64Array(nBins);
+  for(let i=0;i<nBins;i++){
+    const f=(i/(nBins-1))*nyquist;
+    let lo=0,hi=points.length-1;
+    for(let j=0;j<points.length-1;j++){ if(points[j].freq<=f&&points[j+1].freq>=f){ lo=j; hi=j+1; break; } }
+    if(f<=points[0].freq){ magnitude[i]=points[0].mult; continue; }
+    if(f>=points[points.length-1].freq){ magnitude[i]=points[points.length-1].mult; continue; }
+    const flo=Math.max(points[lo].freq,1), fhi=Math.max(points[hi].freq,1);
+    const tt=(Math.log(Math.max(f,1))-Math.log(flo))/(Math.log(fhi)-Math.log(flo));
+    magnitude[i]=points[lo].mult+tt*(points[hi].mult-points[lo].mult);
+  }
+  const response=new Float64Array(filterLen);
+  for(let i=0;i<nBins;i++){
+    const dbAtt=20*Math.log10(Math.abs(magnitude[i])+1e-10)-20*Math.log10(1.0);
+    response[i]=Math.pow(10,(dbAtt-6.02)/20);
+  }
+  const re=new Float64Array(filterLen), im=new Float64Array(filterLen);
+  for(let i=0;i<nBins;i++){ re[i]=response[i]; im[i]=0; }
+  for(let i=1;i<nBins-1;i++){ re[filterLen-i]=re[i]; im[filterLen-i]=-im[i]; }
+  lcIfft(re,im,filterLen);
+  const center=filterLen/2;
+  const impulse=new Float64Array(filterLen);
+  let maxAbs=0;
+  for(let i=0;i<filterLen;i++){
+    const n=(i+center)%filterLen;
+    const w=0.42-0.5*Math.cos(2*Math.PI*i/filterLen)+0.08*Math.cos(4*Math.PI*i/filterLen);
+    impulse[i]=re[n]*w;
+    if(Math.abs(impulse[i])>maxAbs) maxAbs=Math.abs(impulse[i]);
+  }
+  if(maxAbs>0){ const scale=0.5/maxAbs; for(let i=0;i<filterLen;i++) impulse[i]*=scale; }
+  return impulse;
+}
+function lcFft(re,im,n){
+  const bits=Math.log2(n);
+  for(let i=0;i<n;i++){ const j=parseInt(i.toString(2).padStart(bits,'0').split('').reverse().join(''),2); if(j>i){ [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; } }
+  for(let s=1;s<=bits;s++){
+    const m=1<<s, wRe=Math.cos(-2*Math.PI/m), wIm=Math.sin(-2*Math.PI/m);
+    for(let k=0;k<n;k+=m){
+      let uRe=1,uIm=0;
+      for(let j=0;j<m/2;j++){
+        const tRe=uRe*re[k+j+m/2]-uIm*im[k+j+m/2], tIm=uRe*im[k+j+m/2]+uIm*re[k+j+m/2];
+        re[k+j+m/2]=re[k+j]-tRe; im[k+j+m/2]=im[k+j]-tIm;
+        re[k+j]+=tRe; im[k+j]+=tIm;
+        const nuRe=uRe*wRe-uIm*wIm; uIm=uRe*wIm+uIm*wRe; uRe=nuRe;
+      }
+    }
+  }
+}
+function lcIfft(re,im,n){ for(let i=0;i<n;i++) im[i]=-im[i]; lcFft(re,im,n); for(let i=0;i<n;i++){ re[i]/=n; im[i]=-im[i]/n; } }
+async function lcExport(){
+  if(lcConfirmed.size<10){ alert(getLang()==='en'?'Calibrate at least 10 frequencies!':'Mindestens 10 Frequenzen kalibrieren!'); return; }
+  const el=document.getElementById('lcExportStatus'); el.dataset.busy='1';
+  const rates=[44100,48000,88200,96000,176400,192000,352800,384000], filterLen=65536;
+  el.textContent=(getLang()==='en'?'Computing filter for ':'Berechne Filter für ')+rates.length+(getLang()==='en'?' sample rates…':' Sampleraten…');
+  await new Promise(r=>setTimeout(r,80));
+  const filters={};
+  for(const sr of rates){
+    el.textContent=(getLang()==='en'?'Computing ':'Berechne ')+(sr/1000)+' kHz…';
+    await new Promise(r=>setTimeout(r,40));
+    const impulse=lcComputeFilter(sr,filterLen);
+    if(!impulse){ el.textContent=(getLang()==='en'?'Error at ':'Fehler bei ')+sr+' Hz'; return; }
+    const bytes=new Uint8Array(impulse.buffer);
+    let binary=''; for(let i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
+    filters[String(sr)]=btoa(binary);
+  }
+  el.textContent=getLang()==='en'?'Saving filter…':'Speichere Filter…';
+  try{
+    const r=await fetch('/api/locotest/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filters:filters})});
+    const d=await r.json();
+    el.innerHTML='<span style="color:var(--am)">'+escAttr(d.message||(getLang()==='en'?'Filter saved':'Filter gespeichert'))+'</span>';
+    logLine(t('log.loco_filter_saved'));
+  }catch(e){ el.textContent='Fehler: '+e.message; }
+  el.dataset.busy='';
+}
+
+loadRenderers(false);
+</script>
+</body>
+</html>

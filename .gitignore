@@ -1,0 +1,5 @@
+/amberfocus-setup
+/dist/
+*.dbl
+*.exe
+.DS_Store
