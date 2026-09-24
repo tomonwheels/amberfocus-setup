@@ -40,7 +40,7 @@ var (
 )
 
 func main() {
-	flag.IntVar(&port, "port", 8099, "HTTP port for the web UI")
+	flag.IntVar(&port, "port", 8095, "HTTP port for the web UI")
 	flag.StringVar(&outDir, "out", ".", "output directory for exported .dbl filter files")
 	noBrowser := flag.Bool("no-browser", false, "do not open a browser automatically")
 	flag.Parse()

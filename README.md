@@ -14,10 +14,10 @@ It's a small cross-platform web app. Build and run from source:
 
 ```
 go build -o amberfocus-setup ./cmd/amberfocus-setup
-./amberfocus-setup            # opens http://localhost:8099 in your browser
+./amberfocus-setup            # opens http://localhost:8095 in your browser
 ```
 
-Flags: `--port` (default 8099), `--out` (output directory for the `.dbl` files,
+Flags: `--port` (default 8095), `--out` (output directory for the `.dbl` files,
 default current dir), `--no-browser`.
 
 In the UI, pick an **output**:
